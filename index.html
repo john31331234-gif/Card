@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>디지몬 카드 덱 메이커</title>
+  <meta name="description" content="디지몬 카드 게임 덱을 검색하고, 만들고, 저장하고, 공유하세요.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="logo">🃏 디지몬 카드 덱 메이커</h1>
+    <div class="deck-controls">
+      <input id="deckName" class="deck-name" type="text" placeholder="덱 이름" maxlength="40">
+      <button id="btnNew" class="btn">새 덱</button>
+      <button id="btnSave" class="btn primary">저장</button>
+      <button id="btnLoad" class="btn">불러오기</button>
+      <button id="btnExport" class="btn">내보내기</button>
+      <button id="btnImport" class="btn">가져오기</button>
+      <button id="btnShare" class="btn">공유 링크</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- 카드 검색 -->
+    <section class="panel search-panel" aria-label="카드 검색">
+      <form id="searchForm" class="search-form">
+        <input id="qName" type="search" placeholder="카드 이름 (영문, 예: Agumon)">
+        <input id="qNumber" type="search" placeholder="카드 번호 (예: BT1-010)">
+        <input id="qText" type="search" placeholder="효과 텍스트 포함">
+        <select id="qColor">
+          <option value="">모든 색</option>
+          <option value="Red">빨강</option>
+          <option value="Blue">파랑</option>
+          <option value="Yellow">노랑</option>
+          <option value="Green">초록</option>
+          <option value="Black">검정</option>
+          <option value="Purple">보라</option>
+          <option value="White">흰색</option>
+        </select>
+        <select id="qType">
+          <option value="">모든 종류</option>
+          <option value="Digimon">디지몬</option>
+          <option value="Digi-Egg">디지타마</option>
+          <option value="Tamer">테이머</option>
+          <option value="Option">옵션</option>
+        </select>
+        <select id="qLevel">
+          <option value="">모든 레벨</option>
+          <option value="2">Lv.2</option>
+          <option value="3">Lv.3</option>
+          <option value="4">Lv.4</option>
+          <option value="5">Lv.5</option>
+          <option value="6">Lv.6</option>
+          <option value="7">Lv.7</option>
+        </select>
+        <input id="qPack" type="search" placeholder="세트 (예: BT1, ST1)">
+        <button class="btn primary" type="submit">검색</button>
+      </form>
+      <div id="searchStatus" class="status" role="status">카드 이름이나 조건을 입력하고 검색하세요.</div>
+      <div id="results" class="card-grid"></div>
+    </section>
+
+    <!-- 덱 -->
+    <section class="panel deck-panel" aria-label="덱">
+      <div class="deck-summary">
+        <div class="counter" id="mainCounter">메인 덱 <b>0</b>/50</div>
+        <div class="counter" id="eggCounter">디지타마 덱 <b>0</b>/5</div>
+        <div id="deckWarnings" class="warnings"></div>
+      </div>
+
+      <div class="deck-tabs" role="tablist">
+        <button class="tab active" data-view="list" role="tab">리스트</button>
+        <button class="tab" data-view="grid" role="tab">이미지</button>
+        <button class="tab" data-view="stats" role="tab">통계</button>
+        <button class="tab" data-view="draw" role="tab">테스트 드로우</button>
+      </div>
+
+      <div id="deckView" class="deck-view"></div>
+    </section>
+  </main>
+
+  <!-- 카드 상세 -->
+  <dialog id="cardDialog" class="dialog">
+    <form method="dialog"><button class="close" aria-label="닫기">✕</button></form>
+    <div id="cardDetail"></div>
+  </dialog>
+
+  <!-- 텍스트 입출력 -->
+  <dialog id="textDialog" class="dialog">
+    <form method="dialog"><button class="close" aria-label="닫기">✕</button></form>
+    <h2 id="textTitle">내보내기</h2>
+    <p id="textHelp" class="muted"></p>
+    <textarea id="textArea" rows="16" spellcheck="false"></textarea>
+    <div class="dialog-actions">
+      <button id="textCopy" class="btn">복사</button>
+      <button id="textConfirm" class="btn primary">가져오기</button>
+    </div>
+  </dialog>
+
+  <!-- 저장된 덱 -->
+  <dialog id="loadDialog" class="dialog">
+    <form method="dialog"><button class="close" aria-label="닫기">✕</button></form>
+    <h2>저장된 덱</h2>
+    <ul id="savedList" class="saved-list"></ul>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <footer class="footer">
+    카드 데이터·이미지: <a href="https://digimoncard.io" target="_blank" rel="noopener">digimoncard.io</a> ·
+    비공식 팬 제작 도구이며 Bandai와 관련이 없습니다.
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/deck.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
