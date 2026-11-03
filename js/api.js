@@ -1,5 +1,6 @@
 /* digimoncard.io 공개 API 래퍼 */
 const CardAPI = (() => {
+  const desktop = window.desktop && window.desktop.isDesktop ? window.desktop : null;
   const BASE = 'https://digimoncard.io/api-public';
   const IMG = 'https://images.digimoncard.io/images/cards/';
   const cache = new Map(); // 카드 번호 -> 카드
@@ -45,12 +46,23 @@ const CardAPI = (() => {
     const q = new URLSearchParams({ series: 'Digimon Card Game', sort: 'card_number', sortdirection: 'asc' });
     for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
     await throttle();
-    const res = await fetch(`${BASE}/search?${q}`);
-    if (!res.ok) {
-      if (res.status === 400 || res.status === 404) return [];
-      throw new Error(`API 오류 (${res.status})`);
+    let data;
+    api.lastOffline = false;
+    if (desktop) {
+      // PC 프로그램: 메인 프로세스가 대신 요청 (CORS 제한 없음, 오프라인 시 저장된 결과)
+      let r;
+      try { r = await desktop.apiGet('search', Object.fromEntries(q)); }
+      catch (e) { throw new Error(String(e.message).replace(/^Error invoking remote method '[^']+': (Error: )?/, '')); }
+      data = r.data;
+      api.lastOffline = r.offline;
+    } else {
+      const res = await fetch(`${BASE}/search?${q}`);
+      if (!res.ok) {
+        if (res.status === 400 || res.status === 404) return [];
+        throw new Error(`API 오류 (${res.status})`);
+      }
+      data = await res.json();
     }
-    const data = await res.json();
     if (!Array.isArray(data)) return [];
     // 같은 번호의 중복(패럴렐 등)은 하나로 합친다
     const seen = new Map();
@@ -70,7 +82,9 @@ const CardAPI = (() => {
     return list.find(c => c.id.toUpperCase() === id) || null;
   }
 
-  const image = id => `${IMG}${encodeURIComponent(id)}.jpg`;
+  // PC 프로그램에서는 cardimg:// 로 요청 → PC에 저장된 이미지 또는 공식 이미지를 받아 저장
+  const image = id => desktop ? `cardimg://card/${encodeURIComponent(id)}` : `${IMG}${encodeURIComponent(id)}.jpg`;
 
-  return { search, getByNumber, image, remember: c => cache.set(c.id, c) };
+  const api = { search, getByNumber, image, remember: c => cache.set(c.id, c), desktop, lastOffline: false };
+  return api;
 })();

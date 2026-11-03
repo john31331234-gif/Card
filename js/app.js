@@ -81,7 +81,8 @@
       let list = await CardAPI.search(params);
       if (level) list = list.filter(c => String(c.level) === level);
       lastResults = list;
-      $('#searchStatus').textContent = list.length ? `${list.length}장 찾음 · 클릭하면 상세 정보, ＋ 버튼으로 덱에 추가` : '검색 결과가 없습니다.';
+      $('#searchStatus').textContent = (list.length ? `${list.length}장 찾음 · 클릭하면 상세 정보, ＋ 버튼으로 덱에 추가` : '검색 결과가 없습니다.')
+        + (CardAPI.lastOffline ? ' (오프라인: 저장된 검색 결과)' : '');
       renderResults();
     } catch (err) {
       console.error(err);
@@ -451,6 +452,30 @@
     deck = d; changed();
     toast(missing.length ? `일부 카드를 찾지 못했습니다: ${missing.join(', ')}` : '공유된 덱을 불러왔습니다');
     return true;
+  }
+
+  /* ---------- PC 프로그램 설정 ---------- */
+  const desktop = CardAPI.desktop;
+  const fmtBytes = b => b > 1048576 ? `${(b / 1048576).toFixed(1)}MB` : `${Math.round(b / 1024)}KB`;
+  async function renderSettings() {
+    const [st, info] = await Promise.all([desktop.getSettings(), desktop.cacheInfo()]);
+    $('#imgSource').value = st.imageSource;
+    $('#cacheInfo').textContent = `저장된 카드 이미지 ${info.images.count}장 (${fmtBytes(info.images.bytes)}) · 저장된 검색 결과 ${info.api.count}개`;
+  }
+  if (desktop) {
+    document.body.classList.add('is-desktop');
+    $('#btnSettings').hidden = false;
+    $('#btnShare').hidden = true; // PC 프로그램에서는 링크 대신 "내보내기" 텍스트로 공유
+    $('#btnSettings').addEventListener('click', async () => { await renderSettings(); $('#settingsDialog').showModal(); });
+    $('#imgSource').addEventListener('change', async e => {
+      await desktop.setSettings({ imageSource: e.target.value });
+      toast('이미지 출처를 바꿨습니다. 새로 보는 카드부터 적용됩니다.');
+    });
+    $('#btnClearCache').addEventListener('click', async () => {
+      if (!confirm('PC에 저장된 카드 이미지와 검색 결과를 모두 지울까요? (덱은 지워지지 않습니다)')) return;
+      await desktop.clearCache(); await renderSettings(); toast('저장된 데이터를 지웠습니다');
+    });
+    $('#btnOpenFolder').addEventListener('click', () => desktop.openDataFolder());
   }
 
   /* ---------- 시작 ---------- */
